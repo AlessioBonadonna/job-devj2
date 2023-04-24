@@ -12,17 +12,23 @@ use Doctrine\DBAL\Connection;
 class CategoriesController extends AbstractController
 {
     #[Route('/api/categories')]
-    public function list(Connection $db, Request $request, LoggerInterface $log): Response
+    public function categories(Connection $db, Request $request ): Response
     {
+         //ottengo i dati dalla richiesta 
         $json = $request->getContent();
         $data = json_decode($json, true);
+
         if (isset($data['filter'])) {
             $filters = $data['filter'];
         }
+        // Creo una nuova istanza di QueryBuilder per costruire la query 
         $qb = $db->createQueryBuilder();
+
+        // Selezioniamo tutti i campi della tabella "genres"
         $qb->select("c.*")
             ->from("genres", "c");
         $rows = $qb->executeQuery()->fetchAllAssociative();
+        // Ritorno i risultati come JSON nella risposta
         return $this->json([
             "categories" => $rows
         ]);

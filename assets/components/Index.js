@@ -10,6 +10,7 @@ const Index = (props) => {
 
   const fetchMovies = () => {
     setLoading(true);
+     // Configuro  le opzioni da passare alla richiesta fetch
     const options = {
       method: "POST",
       headers: {
@@ -20,6 +21,7 @@ const Index = (props) => {
     return fetch("/api/movies", options)
       .then((response) => response.json())
       .then((data) => {
+        // modifico lo stato del componente con i dati ricevuti dalla risposta
         setMovies(data.movies);
         setLoading(false);
       });
@@ -30,7 +32,7 @@ const Index = (props) => {
     return fetch("/api/categories")
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
+        // console.log(data);
         setCategories(data.categories);
         setLoading(false);
       });
@@ -192,7 +194,6 @@ const MovieItem = (props) => {
               {props.rating ? (
                 <Rating>
                   <Rating.Star />
-
                   <span className="ml-0.5">{props.rating}</span>
                 </Rating>
               ) : null}
@@ -202,12 +203,10 @@ const MovieItem = (props) => {
           <h3 className="text-gray-900 text-lg leading-tight font-semibold mb-1">
             {props.title}
           </h3>
-
           <p className="text-gray-600 text-sm leading-normal mb-4 last:mb-0">
             {props.plot.substr(0, 80)}...
           </p>
         </div>
-
         {props.wikipedia_url ? (
           <Button
             color="light"
