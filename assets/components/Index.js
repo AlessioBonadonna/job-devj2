@@ -1,29 +1,99 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Rating, Spinner } from 'flowbite-react';
+import React, { useEffect, useState } from "react";
+import { Button, Rating, Spinner } from "flowbite-react";
 
-const Index = props => {
+const Index = (props) => {
   const [movies, setMovies] = useState([]);
+  const [filter, setFilter] = useState(0);
+  const [filterCategory, setFilterCategory] = useState("");
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchMovies = () => {
     setLoading(true);
-
-    return fetch('/api/movies')
-      .then(response => response.json())
-      .then(data => {
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ filter: filter, category: filterCategory }),
+    };
+    return fetch("/api/movies", options)
+      .then((response) => response.json())
+      .then((data) => {
         setMovies(data.movies);
         setLoading(false);
       });
-  }
+  };
+  const fetchCategories = () => {
+    setLoading(true);
+
+    return fetch("/api/categories")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+        setCategories(data.categories);
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
+    fetchCategories();
     fetchMovies();
   }, []);
+  useEffect(() => {
+    fetchMovies();
+  }, [filter]);
+  useEffect(() => {
+    fetchMovies();
+  }, [filterCategory]);
 
   return (
     <Layout>
+      <style>
+        {`
+          .selectInput {
+           height: 4rem;
+           border: 1px solid lightgray;
+           border-radius: 10px;
+           padding-left: 20px;
+           font-size: 1.2em;
+           font-weight: 300;
+           padding-right: 20px;
+           width: 100%;
+           outline: none;
+           box-shadow: none;
+          }
+          .selectInput:focus {
+            outline: none;
+          border: 3px solid lightblue;
+          }
+          .orderBy{
+            font-size: 1.4em;
+            margin-bottom: 10px;
+            font-weight: 300;
+          }
+        `}
+      </style>
       <Heading />
-
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="w-full md:w-1/2">
+          <Filters
+            isCategory={false}
+            filters={[
+              { value: 1, title: "Più recenti" },
+              { value: 2, title: "Rating" },
+            ]}
+            setFilter={setFilter}
+          />
+        </div>
+        <div className="w-full md:w-1/2">
+          <Filters
+            filters={categories}
+            isCategory={true}
+            setFilter={setFilterCategory}
+          />
+        </div>
+      </div>
       <MovieList loading={loading}>
         {movies.map((item, key) => (
           <MovieItem key={key} {...item} />
@@ -33,7 +103,35 @@ const Index = props => {
   );
 };
 
-const Layout = props => {
+const Filters = (props) => {
+  return (
+    <section className="bg-white dark:bg-gray-900">
+      <div className="py-8 px-4 mx-auto max-w-screen-xl lg:py-16 lg:px-6">
+        <select
+          className="selectInput"
+          onChange={(e) => {
+            props.setFilter(e.target.value);
+          }}
+        >
+          <option value={0}>
+            {props.isCategory
+              ? "Select a genre"
+              : "Select an order"}
+          </option>
+          {props.filters.map((filter) => {
+            return (
+              <option value={filter.value}>
+                {props.isCategory ? filter.value : filter.title}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+    </section>
+  );
+};
+
+const Layout = (props) => {
   return (
     <section className="bg-white dark:bg-gray-900">
       <div className="py-8 px-4 mx-auto max-w-screen-xl lg:py-16 lg:px-6">
@@ -43,7 +141,7 @@ const Layout = props => {
   );
 };
 
-const Heading = props => {
+const Heading = (props) => {
   return (
     <div className="mx-auto max-w-screen-sm text-center mb-8 lg:mb-16">
       <h1 className="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
@@ -57,7 +155,7 @@ const Heading = props => {
   );
 };
 
-const MovieList = props => {
+const MovieList = (props) => {
   if (props.loading) {
     return (
       <div className="text-center">
@@ -73,7 +171,7 @@ const MovieList = props => {
   );
 };
 
-const MovieItem = props => {
+const MovieItem = (props) => {
   return (
     <div className="flex flex-col w-full h-full rounded-lg shadow-md lg:max-w-sm">
       <div className="grow">
@@ -87,23 +185,19 @@ const MovieItem = props => {
 
       <div className="grow flex flex-col h-full p-3">
         <div className="grow mb-3 last:mb-0">
-          {props.year || props.rating
-            ? <div className="flex justify-between align-middle text-gray-900 text-xs font-medium mb-2">
-                <span>{props.year}</span>
+          {props.year || props.rating ? (
+            <div className="flex justify-between align-middle text-gray-900 text-xs font-medium mb-2">
+              <span>{props.year}</span>
 
-                {props.rating
-                  ? <Rating>
-                      <Rating.Star />
+              {props.rating ? (
+                <Rating>
+                  <Rating.Star />
 
-                      <span className="ml-0.5">
-                        {props.rating}
-                      </span>
-                    </Rating>
-                  : null
-                }
-              </div>
-            : null
-          }
+                  <span className="ml-0.5">{props.rating}</span>
+                </Rating>
+              ) : null}
+            </div>
+          ) : null}
 
           <h3 className="text-gray-900 text-lg leading-tight font-semibold mb-1">
             {props.title}
@@ -114,17 +208,16 @@ const MovieItem = props => {
           </p>
         </div>
 
-        {props.wikipedia_url
-          ? <Button
-              color="light"
-              size="xs"
-              className="w-full"
-              onClick={() => window.open(props.wikipedia_url, '_blank')}
-            >
-              More
-            </Button>
-          : null
-        }
+        {props.wikipedia_url ? (
+          <Button
+            color="light"
+            size="xs"
+            className="w-full"
+            onClick={() => window.open(props.wikipedia_url, "_blank")}
+          >
+            More
+          </Button>
+        ) : null}
       </div>
     </div>
   );
